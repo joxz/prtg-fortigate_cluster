@@ -1,0 +1,132 @@
+from pysnmp.hlapi import *
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+import sys
+import json
+from paepy.ChannelDefinition import CustomSensorResult
+
+class SNMPClient:
+
+    # This is the SNMPClient constructor
+    def __init__(self, host, port=161, community='public'):
+        
+        self.host = host
+        self.port = port
+        self.community = community
+ 
+    def snmpget(self, oid, *more_oids):
+ 
+        cmdGen = cmdgen.CommandGenerator()
+         
+        errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(
+            cmdgen.CommunityData(self.community),
+            cmdgen.UdpTransportTarget((self.host, self.port)),
+            oid,
+            *more_oids
+        )
+ 
+        # Predefine our results list    
+        results = {}
+ 
+        # Check for errors and print out results
+        if errorIndication:
+            print(errorIndication)
+        else:
+            if errorStatus:
+                print('%s at %s' % (
+                    errorStatus.prettyPrint(),
+                    errorIndex and varBinds[int(errorIndex)-1] or '?'
+                    )
+                )
+            else:
+                for name, val in varBinds:
+                    results[str(val)] = str(name)
+ 
+        return results
+
+    def snmpwalk(self, oid):
+
+        cmdGen = cmdgen.CommandGenerator()
+
+        errorIndication, errorStatus, errorIndex, varBindTable = cmdGen.nextCmd(
+            cmdgen.CommunityData(self.community),
+            cmdgen.UdpTransportTarget((self.host, self.port)),
+            oid
+        )
+
+        # Predefine our results list    
+        results = {}
+
+        if errorIndication:
+            print(errorIndication)
+        else:
+            if errorStatus:
+                print('%s at %s' % (
+                    errorStatus.prettyPrint(),
+                    errorIndex and varBindTable[-1][int(errorIndex)-1] or '?'
+                    )
+                )
+            else:
+                for varBindTableRow in varBindTable:
+                    for name, val in varBindTableRow:
+                        results[str(val)] = str(name)
+            
+        return results                        
+
+# load PRTG parameters
+params = json.loads(sys.argv[1])
+
+conn = SNMPClient(params['host'], 161, params['snmpcommv2'])
+
+# get serial numbers of cluster members
+deviceSerialsHashtable = conn.snmpget('1.3.6.1.4.1.12356.101.13.2.1.1.2.1', '1.3.6.1.4.1.12356.101.13.2.1.1.2.2')
+
+# switch keys and values and replace oid with unit number 
+device = dict((v,k) for k,v in deviceSerialsHashtable.items())
+device['unit1'] = device.pop('1.3.6.1.4.1.12356.101.13.2.1.1.2.1')
+device['unit2'] = device.pop('1.3.6.1.4.1.12356.101.13.2.1.1.2.2')
+
+for k,v in device.items():
+    device[k] = {'serial': v}
+
+for i in device:
+    # construct snmp community for each cluster member
+    device[i]['snmpc'] = params['snmpcommv2'] + '-' + device[i]['serial']
+
+    # snmpwalk ifName OID
+    conn = SNMPClient(params['host'], 161, device[i]['snmpc'])
+    interfaces = conn.snmpwalk('1.3.6.1.2.1.31.1.1.1.1')
+
+    # cut oid to interface id
+    for k,v in interfaces.items():
+        interfaces[k] = {'ifIndex': v.replace("1.3.6.1.2.1.31.1.1.1.1.","")}
+
+    # join to 'device' dict
+    device[i]['int'] = interfaces
+
+    # get cluster index of unit
+    clindex = conn.snmpget('1.3.6.1.4.1.12356.101.13.2.1.1.1.' + i.replace('unit',''))
+    for p in clindex.keys():
+        device[i].update({'clIndex': str(p)})
+
+    # get hsotname
+    hostname = conn.snmpget('1.3.6.1.4.1.12356.101.13.2.1.1.11.1')
+    for p in hostname.keys():
+        device[i].update({'hostname': str(p)})
+
+    # get ifOperstatus for all interfaces
+    for p in device[i]['int'].keys():
+        ifstatus = conn.snmpget('1.3.6.1.2.1.2.2.1.8' + "." + device[i]['int'][p]['ifIndex'])
+        for k,v in ifstatus.items():
+            device[i]['int'][p].update({'ifstatus': str(k)})
+
+# create PRTG sensor channels
+result = CustomSensorResult("Result from FortiGate Cluster Sensor " + params['host'])
+for i in device:
+    cnamewan1 = device[i]['hostname'] + " WAN1"
+    result.add_channel(channel_name = cnamewan1, value = device[i]['int']['wan1']['ifstatus'], value_lookup = 'prtg.standardlookups.yesno.statenook')
+    cnameint = device[i]['hostname'] + " INTERNAL"
+    result.add_channel(channel_name = cnameint, value = device[i]['int']['internal']['ifstatus'], value_lookup = 'prtg.standardlookups.yesno.statenook')
+    cnamedmz = device[i]['hostname'] + " DMZ"
+    result.add_channel(channel_name = cnamedmz, value = device[i]['int']['dmz']['ifstatus'], value_lookup = 'prtg.standardlookups.yesno.statenook')
+
+print(result.get_json_result())
