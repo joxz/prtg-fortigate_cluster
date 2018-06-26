@@ -1,9 +1,11 @@
 # prtg-fortigate_cluster
 PRTG custom sensor to query nodes behind the virtual management IP
 
-Subordinate Fortigate Cluster nodes send their management traffic [through the primary unit][mgmt-traffic] if no separate management IP is defined. This makes queries for interfaces with normal SNMP queries impossible, as an OID query to an interface of the subordinate unit returns `#N SNMP_EXCEPTION_NOSUCHINSTANCE`.
+![scr01](assets/img/scr01.jpg)
 
-Subordinate nodes can be queried by appending the serial number to the SNMP community and querying the cluster IP. See [Fortinet Link for Monitoring HA Clusters][forti-link]
+Slave Fortigate Cluster nodes send their management traffic [through the primary unit][mgmt-traffic] if no separate management IP is defined. This makes queries for interfaces with normal SNMP queries impossible, as an OID query to an interface of the subordinate unit returns `#N SNMP_EXCEPTION_NOSUCHINSTANCE`.
+
+Slave nodes can be queried by appending the serial number to the SNMP community and querying the cluster IP. See [Fortinet Link for Monitoring HA Clusters][forti-link]
 
 Sample Data Structure:
 
@@ -39,17 +41,29 @@ Sample Data Structure:
 Sample Sensor Output:
 
 ```json
-6/21/2018 12:28:15 PM Exit Code: 0
-6/21/2018 12:28:15 PM RawStream Size: 458
-6/21/2018 12:28:15 PM OutputStream Size: 458
-6/21/2018 12:28:15 PM Script Output (UTF8 Encoding): {"prtg": {"text": "Result from FortiGate Sensor 10.0.16.7",
- "result": [{"Channel": "de-xxx-fw02 WAN1", "Value": 1, "Unit": "Custom"}, {"Channel": "de-xxx-fw02 INTERNAL",
- "Value": 1, "Unit": "Custom"}, {"Channel": "de-xxx-fw02 DMZ", "Value": 1, "Unit": "Custom"}, {"Channel":
- "de-xxx-fw01 WAN1", "Value": 1, "Unit": "Custom"}, {"Channel": "de-xxx-fw01 INTERNAL", "Value": 1, "Unit":
- "Custom"}, {"Channel": "de-xxx-fw01 DMZ", "Value": 1, "Unit": "Custom"}]}}, "Channel": "de-xxx-fw01 DMZ"}]}}
+6/26/2018 9:15:13 AM Exit Code: 0
+6/26/2018 9:15:13 AM RawStream Size: 880
+6/26/2018 9:15:13 AM OutputStream Size: 880
+6/26/2018 9:15:13 AM Script Output (UTF8 Encoding): {"prtg": {"result": [{"ValueLookup": "custom.lookup.forti.interfaces",
+ "Value": 1, "Channel": "de-xxx-fw02 wan1", "Unit": "Custom"}, {"ValueLookup": "custom.lookup.forti.interfaces",
+ "Value": 1, "Channel": "de-xxx-fw02 internal", "Unit": "Custom"}, {"ValueLookup": "custom.lookup.forti.interfaces", 
+ "Value": 1, "Channel": "de-xxx-fw02 dmz", "Unit": "Custom"}, {"ValueLookup": "custom.lookup.forti.interfaces", 
+ "Value": 1, "Channel": "de-xxx-fw02 internal7", "Unit": "Custom"}, {"ValueLookup": "custom.lookup.forti.interfaces",
+ "Value": 1, "Channel": "de-xxx-fw01 internal", "Unit": "Custom"}, {"ValueLookup": "custom.lookup.forti.interfaces",
+ "Value": 1, "Channel": "de-xxx-fw01 dmz", "Unit": "Custom"}, {"ValueLookup": "custom.lookup.forti.interfaces",
+ "Value": 1, "Channel": "de-xxx-fw01 internal7", "Unit": "Custom"}], "text": "OK"}}[CR][LF]
 ```
 
 PySNMP class from [here][py-snmp-class]
+
+## Installation
+
+- Copy `prtg-custom-forti-cl.py` to: `C:\Program Files (x86)\PRTG Network Monitor\Custom Sensors\python\`
+- Copy lookup file to: `C:\Program Files (x86)\PRTG Network Monitor\lookups\custom\` 
+- Add new `Python Script Advanced` Sensor
+- Select script in dropdown menu and create sensor
+- In the sensor settings select 'Transmit SNMP credentials'
+- Load custom lookup file: Setup - System Administration - Administrative Tools, 'Load Lookups and File Lists' -> Go
 
 [mgmt-traffic]: http://help.fortinet.com/fos50hlp/54/Content/FortiOS/fortigate-high-availability-52/HA_operatingPrimaryRouter.htm
 [forti-link]: http://help.fortinet.com/fos50hlp/54/Content/FortiOS/fortigate-high-availability-52/HA_operatingSNMP.htm

@@ -98,7 +98,7 @@ for i in device:
 
     # cut oid to interface id
     for k,v in interfaces.items():
-        interfaces[k] = {'ifIndex': v.replace("1.3.6.1.2.1.31.1.1.1.1.","")}
+        interfaces[k] = {'ifindex': v.replace("1.3.6.1.2.1.31.1.1.1.1.","")}
 
     # join to 'device' dict
     device[i]['int'] = interfaces
@@ -106,7 +106,7 @@ for i in device:
     # get cluster index of unit
     clindex = conn.snmpget('1.3.6.1.4.1.12356.101.13.2.1.1.1.' + i.replace('unit',''))
     for p in clindex.keys():
-        device[i].update({'clIndex': str(p)})
+        device[i].update({'clindex': str(p)})
 
     # get hsotname
     hostname = conn.snmpget('1.3.6.1.4.1.12356.101.13.2.1.1.11.1')
@@ -115,18 +115,29 @@ for i in device:
 
     # get ifOperstatus for all interfaces
     for p in device[i]['int'].keys():
-        ifstatus = conn.snmpget('1.3.6.1.2.1.2.2.1.8' + "." + device[i]['int'][p]['ifIndex'])
+        ifstatus = conn.snmpget('1.3.6.1.2.1.2.2.1.8' + "." + device[i]['int'][p]['ifindex'])
         for k,v in ifstatus.items():
             device[i]['int'][p].update({'ifstatus': str(k)})
 
 # create PRTG sensor channels
-result = CustomSensorResult("Result from FortiGate Cluster Sensor " + params['host'])
+prtg = CustomSensorResult('OK')
 for i in device:
-    cnamewan1 = device[i]['hostname'] + " WAN1"
-    result.add_channel(channel_name = cnamewan1, value = device[i]['int']['wan1']['ifstatus'], value_lookup = 'prtg.standardlookups.yesno.statenook')
-    cnameint = device[i]['hostname'] + " INTERNAL"
-    result.add_channel(channel_name = cnameint, value = device[i]['int']['internal']['ifstatus'], value_lookup = 'prtg.standardlookups.yesno.statenook')
-    cnamedmz = device[i]['hostname'] + " DMZ"
-    result.add_channel(channel_name = cnamedmz, value = device[i]['int']['dmz']['ifstatus'], value_lookup = 'prtg.standardlookups.yesno.statenook')
+    for k in device[i]['int'].keys():
+        cname = device[i]['hostname'] + " " + k
+        # set primary channel: inteface wan 1 of cluster unit 1
+        if 'wan1' in k and device[i]['clIndex'] == '1':
+            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces', primary_channel=True) 
+        
+        # other channels of interest 
+        elif 'internal' in k:
+            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
+        elif 'dmz' in k:
+            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
+        elif 'ha' in k:
+            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
+        elif 'glt' in k:
+            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
+        else:
+            pass
 
-print(result.get_json_result())
+print(prtg.get_json_result())
