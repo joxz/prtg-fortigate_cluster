@@ -62,7 +62,9 @@ PySNMP class from [here][py-snmp-class]
 - Copy lookup file to: `C:\Program Files (x86)\PRTG Network Monitor\lookups\custom\` 
 - Add new `Python Script Advanced` Sensor
 - Select script in dropdown menu and create sensor
-- In the sensor settings select 'Transmit SNMP credentials'
+- Sensor settings
+  - Select 'Transmit SNMP credentials'
+  - Additional Parameters: Add interfaces to be monitored, e.g.: "wan1","dmz","lan1"
 - Load custom lookup file: Setup - System Administration - Administrative Tools, 'Load Lookups and File Lists' -> Go
 
 [mgmt-traffic]: http://help.fortinet.com/fos50hlp/54/Content/FortiOS/fortigate-high-availability-52/HA_operatingPrimaryRouter.htm
