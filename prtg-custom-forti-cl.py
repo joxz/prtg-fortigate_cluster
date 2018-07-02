@@ -123,7 +123,6 @@ for i in device:
 iflist = params['params']
 
 # create PRTG sensor channels
-<<<<<<< HEAD
 result = CustomSensorResult("Result from FortiGate Sensor " + params['host'])
 for i in device:
     for k in device[i]['int'].keys():
@@ -131,33 +130,9 @@ for i in device:
         if k in iflist:
             if k == 'wan1' and device[i]['clIndex'] == '1':
                 result.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'knauf.custom.lookup.forti.interfaces', primary_channel=True)
-                #print(cname + " ifstatus: " + device[i]['int'][k]['ifstatus'])
             else:
                 result.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'knauf.custom.lookup.forti.interfaces')
         else:
             pass
 
 print(result.get_json_result())
-=======
-prtg = CustomSensorResult('OK')
-for i in device:
-    for k in device[i]['int'].keys():
-        cname = device[i]['hostname'] + " " + k
-        # set primary channel: inteface wan 1 of cluster unit 1
-        if 'wan1' in k and device[i]['clIndex'] == '1':
-            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces', primary_channel=True) 
-        
-        # other channels of interest 
-        elif 'internal' in k:
-            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
-        elif 'dmz' in k:
-            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
-        elif 'ha' in k:
-            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
-        elif 'glt' in k:
-            prtg.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
-        else:
-            pass
-
-print(prtg.get_json_result())
->>>>>>> a4fba2919790d4f42935d5c2a757e10f59954c45
