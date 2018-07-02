@@ -1,4 +1,5 @@
 # prtg-fortigate_cluster
+
 PRTG custom sensor to query nodes behind the virtual management IP
 
 ![scr01](assets/img/scr01.jpg)
@@ -9,7 +10,7 @@ Slave nodes can be queried by appending the serial number to the SNMP community 
 
 Sample Data Structure:
 
-```
+```sh
 {'unit1': {'clIndex': '1',
            'hostname': 'de-xxx-fw02',
            'int': {'dmz': {'ifIndex': '3', 'ifstatus': '1'},
@@ -64,7 +65,7 @@ PySNMP class from [here][py-snmp-class]
 - Select script in dropdown menu and create sensor
 - Sensor settings
   - Select 'Transmit SNMP credentials'
-  - Additional Parameters: Add interfaces to be monitored, e.g.: "wan1","dmz","lan1"
+  - Additional Parameters: Add interfaces to be monitored, e.g.: `"wan1","dmz","lan1"`
 - Load custom lookup file: Setup - System Administration - Administrative Tools, 'Load Lookups and File Lists' -> Go
 
 [mgmt-traffic]: http://help.fortinet.com/fos50hlp/54/Content/FortiOS/fortigate-high-availability-52/HA_operatingPrimaryRouter.htm
