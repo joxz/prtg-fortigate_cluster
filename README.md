@@ -8,7 +8,7 @@ Slave Fortigate Cluster nodes send their management traffic [through the primary
 
 Slave nodes can be queried by appending the serial number to the SNMP community and querying the cluster IP. See [Fortinet Link for Monitoring HA Clusters][forti-link]
 
-Sample Data Structure:
+Sample Data Structure (Python Dictionaries):
 
 ```sh
 {'unit1': {'clIndex': '1',
