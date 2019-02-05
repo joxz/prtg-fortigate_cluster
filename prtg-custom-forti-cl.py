@@ -2,6 +2,7 @@ from pysnmp.hlapi import *
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 import sys
 import json
+import re
 from paepy.ChannelDefinition import CustomSensorResult
 
 class SNMPClient:
@@ -72,6 +73,10 @@ class SNMPClient:
             
         return results                        
 
+# find word regex function
+def findWholeWord(w):
+    return re.compile(r'\b({0})\b'.format(w), flags=re.IGNORECASE).search
+
 # load PRTG parameters
 params = json.loads(sys.argv[1])
 
@@ -127,11 +132,11 @@ result = CustomSensorResult("Result from FortiGate Sensor " + params['host'])
 for i in device:
     for k in device[i]['int'].keys():
         cname = device[i]['hostname'] + " " + k
-        if k in iflist:
+        if findWholeWord(k)(iflist) is not None:
             if k == 'wan1' and device[i]['clIndex'] == '1':
-                result.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'knauf.custom.lookup.forti.interfaces', primary_channel=True)
+                result.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces', primary_channel=True)
             else:
-                result.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'knauf.custom.lookup.forti.interfaces')
+                result.add_channel(channel_name = cname, value = device[i]['int'][k]['ifstatus'], value_lookup = 'custom.lookup.forti.interfaces')
         else:
             pass
 
