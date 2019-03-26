@@ -59,6 +59,17 @@ PySNMP class from [here][py-snmp-class]
 
 ## Installation
 
+### Install pysnmp
+
+The Python version installed with PRTG doesn't include `pip` or `easy_install`, so modules have to be manually installed including all dependencies
+
+- Download pysnmp for the PRTG Python version (e.g. Python 3.4 for PRTG 18.4.46.1754) on [pypi.org](https://pypi.org/project/pysnmp/#files)
+- Extract `pysnmp-4.4.9-py3.4.egg` using 7-Zip or whatever works
+- Do the same for [pysnmp dependencies](https://github.com/etingof/pysnmp#download--install) (PyASN1, PySMI, pysnmpcrypto)
+- Copy the module directories to the PRTG server: `<PRTG Install Directory>\Python34\Lib\site-packages\`
+
+### Sensor Configuration
+
 - Copy `prtg-custom-forti-cl.py` to: `C:\Program Files (x86)\PRTG Network Monitor\Custom Sensors\python\`
 - Copy lookup file to: `C:\Program Files (x86)\PRTG Network Monitor\lookups\custom\` 
 - Load custom lookup file: Setup - System Administration - Administrative Tools, 'Load Lookups and File Lists' -> Go
